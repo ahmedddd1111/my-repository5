@@ -52,7 +52,7 @@ const PromptSuggestionsRow = ({ onPromptClick }) => {
   const prompts = [
     "ما هي خدمات التسويق الرقمي التي تقدمونها؟",
     "هل تقدمون خدمات استشارية؟",
-    "كيف يمكنني الحصول على شهادة الأيزو بمساعدتكم؟",
+    "هل تنفذون حفلات تخرج لطلاب الجامعات",
   ];
   return (
     <div className="prompt-suggestion-row">

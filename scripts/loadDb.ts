@@ -5,6 +5,8 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import * as fs from 'fs';
 import * as path from 'path';
 import "dotenv/config";
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
 type SimilarityMetric = "dot_product" | "cosine" | "euclidean";
 
@@ -33,11 +35,88 @@ const createCollection = async (similarityMetric: SimilarityMetric = "dot_produc
     console.log(res);
 };
 
-// قراءة جميع ملفات txt من مجلد data
+const WEB_LINKS = [
+  "https://wamedadv.com/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/",
+  "https://wamedadv.com/ar/%d8%b9%d9%86-%d9%88%d9%85%d9%8a%d8%b6/",
+  "https://wamedadv.com/ar/%d8%a7%d9%84%d8%aa%d8%b3%d9%88%d9%8a%d9%82/",
+  "https://wamedadv.com/ar/%d8%a7%d9%84%d8%a3%d8%b9%d9%85%d8%a7%d9%84/",
+  "https://wamedadv.com/ar/%d8%a5%d9%86%d8%aa%d8%a7%d8%ac-%d8%a5%d8%b9%d9%84%d8%a7%d9%85%d9%8a/",
+  "https://wamedadv.com/ar/%d8%aa%d9%86%d8%b8%d9%8a%d9%85-%d8%a7%d9%84%d9%85%d8%a4%d8%aa%d9%85%d8%b1%d8%a7%d8%aa/",
+  "https://wamedadv.com/ar/%d8%a7%d9%84%d8%b5%d9%88%d8%b1/",
+  "https://wamedadv.com/ar/%d8%a7%d9%84%d9%81%d9%8a%d8%af%d9%8a%d9%88%d9%87%d8%a7%d8%aa/",
+  "https://wamedadv.com/ar/%d8%a7%d9%84%d9%85%d8%af%d9%88%d9%86%d8%a9/",
+  "https://wamedadv.com/ar/%d8%aa%d8%b1%d8%a7%d8%ae%d9%8a%d8%b5%d9%86%d8%a7/",
+  "https://wamedadv.com/ar/%d8%aa%d9%88%d8%a7%d8%b5%d9%84-%d9%85%d8%b9%d9%86%d8%a7/",
+  "https://wamedadv.com/",
+  "https://wamedadv.com/about-us/",
+  "https://wamedadv.com/marketing/",
+  "https://wamedadv.com/business/",
+  "https://wamedadv.com/media-production/",
+  "https://wamedadv.com/event-planning/",
+  "https://wamedadv.com/blog/",
+  "https://wamedadv.com/licenses/",
+  "https://wamedadv.com/contact-us/"
+];
+
+async function fetchWebPageText(url: string): Promise<string> {
+  try {
+    const { data } = await axios.get(url, { timeout: 20000 });
+    const $ = cheerio.load(data);
+    
+    // إزالة العناصر غير المرغوب فيها
+    $('nav, footer, script, style, iframe, noscript, header, .ad, .ads, .menu, .sidebar, .social-links, .comments, .widget').remove();
+
+    // استهداف العناصر التي تحتوي على المحتوى الرئيسي
+    let text = '';
+    const contentSelectors = [
+      'article', 
+      '.post-content', 
+      '.entry-content',
+      'main', 
+      'section', 
+      '.content',
+      'p',
+      'h1, h2, h3, h4, h5, h6'
+    ];
+
+    contentSelectors.forEach(selector => {
+      $(selector).each((_, element) => {
+        const content = $(element).text().trim();
+        if (content.length > 20 && !isUnwantedContent(content)) {
+          text += content + '\n';
+        }
+      });
+    });
+
+    // تنظيف النص النهائي
+    text = text
+      .replace(/\s+/g, ' ')
+      .replace(/(\n\s*){2,}/g, '\n\n')
+      .trim();
+
+    return text || '';
+  } catch (error) {
+    console.error(`خطأ في جلب أو معالجة الرابط: ${url}`, error);
+    return '';
+  }
+}
+
+function isUnwantedContent(text: string): boolean {
+  const unwantedPatterns = [
+    /حقوق النشر/i,
+    /Copyright/i,
+    /©/,
+    /تسجيل الدخول/i,
+    /login/i,
+    /^[\d\s\W]+$/ // المحتوى الذي يحتوي فقط على أرقام ورموز
+  ];
+  
+  return unwantedPatterns.some(pattern => pattern.test(text));
+}
+
 const readDataFiles = async () => {
     const dataFolder = path.join(process.cwd(), 'data');
     
-    // التأكد من وجود مجلد data
     if (!fs.existsSync(dataFolder)) {
         console.error('مجلد data غير موجود! يرجى إنشاؤه وإضافة ملفات txt');
         return [];
@@ -66,6 +145,19 @@ const readDataFiles = async () => {
             console.error(`خطأ في قراءة ملف ${file}:`, error);
         }
     }
+
+    for (const url of WEB_LINKS) {
+        const webText = await fetchWebPageText(url);
+        if (webText && webText.length > 100) {
+            fileContents.push({
+                filename: `web_${encodeURIComponent(url)}.txt`,
+                content: webText
+            });
+            console.log(`تم جلب محتوى الرابط: ${url}`);
+        } else {
+            console.warn(`لم يتم العثور على محتوى كافٍ في الرابط: ${url}`);
+        }
+    }
     
     return fileContents;
 };
@@ -82,14 +174,12 @@ const loadSampleData = async () => {
     for (const fileData of dataFiles) {
         console.log(`معالجة ملف: ${fileData.filename}`);
         
-        // تقسيم المحتوى إلى chunks
         const chunks = await splitter.splitText(fileData.content);
         
         for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
             
             try {
-                // استخدام Gemini للـ embedding
                 const { embedding } = await embed({
                     model: google.textEmbeddingModel('text-embedding-004'),
                     value: chunk,
@@ -97,7 +187,6 @@ const loadSampleData = async () => {
 
                 const vector = embedding;
                 
-                // إدراج البيانات مع معلومات إضافية
                 const res = await collection.insertOne({
                     $vector: vector,
                     text: chunk,
@@ -116,7 +205,6 @@ const loadSampleData = async () => {
     console.log('تم الانتهاء من تحميل جميع البيانات!');
 };
 
-// دالة لمسح البيانات الموجودة (اختيارية)
 const clearCollection = async () => {
     try {
         const collection = await db.collection(ASTRA_DB_COLLECTION);
@@ -127,18 +215,14 @@ const clearCollection = async () => {
     }
 };
 
-// دالة رئيسية للتشغيل
 const main = async () => {
     try {
         console.log('بدء عملية تحميل البيانات...');
         
-        // إنشاء المجموعة (إذا لم تكن موجودة)
         await createCollection();
         
-        // مسح البيانات القديمة (اختياري - احذف هذا السطر إذا كنت تريد إضافة بيانات جديدة فقط)
-        // await clearCollection();
+        // await clearCollection(); // قم بإلغاء التعليق إذا كنت تريد مسح البيانات القديمة
         
-        // تحميل البيانات الجديدة
         await loadSampleData();
         
     } catch (error) {
@@ -146,5 +230,4 @@ const main = async () => {
     }
 };
 
-// تشغيل الكود
 main();
