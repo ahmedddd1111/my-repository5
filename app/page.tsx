@@ -51,7 +51,6 @@ const PromptSuggestionButton = ({ text, onClick }) => {
 const PromptSuggestionsRow = ({ onPromptClick }) => {
   const prompts = [
     "ما هي خدمات التسويق الرقمي التي تقدمونها؟",
-    "أين يقع مقر شركة وميض؟",
     "هل تقدمون خدمات استشارية؟",
     "كيف يمكنني الحصول على شهادة الأيزو بمساعدتكم؟",
   ];
