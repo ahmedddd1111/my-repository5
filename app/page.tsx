@@ -186,7 +186,7 @@ const Home = () => {
               onEmojiClick={handleEmojiSelect}
               width={350}
               height={400}
-              searchPlaceholder="البحث عن رمز تعبيري..."
+              searchPlaceholder="ask me anything..."
               skinTonesDisabled
               previewConfig={{
                 showPreview: false
