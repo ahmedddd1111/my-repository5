@@ -146,7 +146,7 @@ const Home = () => {
             className="message-input"
             onChange={handleInputChange}
             value={input}
-            placeholder="اسأل عن خدمات وميض..."
+            placeholder="ask me anything..."
             rows={1}
             style={{ resize: "none", height: 54 }}
             required
@@ -186,7 +186,7 @@ const Home = () => {
               onEmojiClick={handleEmojiSelect}
               width={350}
               height={400}
-              searchPlaceholder="ask me anything..."
+              searchPlaceholder="البحث عن رمز تعبيري..."
               skinTonesDisabled
               previewConfig={{
                 showPreview: false
