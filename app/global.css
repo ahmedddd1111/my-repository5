@@ -29,7 +29,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #5350C4;
+    background: #0084ff;
     padding: 15px 22px 13px 22px;
     border-radius: 0 0 18px 18px;
 }
@@ -73,7 +73,7 @@ body {
 }
 
 .chat-header #close-chatbot:hover {
-    background-color: #3d39ac;
+    background-color: #00a2ff;
 }
 
 .chat-body {
@@ -165,7 +165,7 @@ body {
 
 .user-message .message-text {
     color: #fff;
-    background: #6f68c2;
+    background: #175aeb;
     border-radius: 16px 16px 6px 16px;
     box-shadow: 0 1px 8px #bdbdfd22;
 }
