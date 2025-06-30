@@ -87,6 +87,26 @@ body {
     scrollbar-width: thin;
     scrollbar-color: #ccccf5 transparent;
     background: none;
+    scroll-behavior: smooth;
+    will-change: scroll-position;
+    align-items: stretch;
+}
+
+.chat-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-body::-webkit-scrollbar-thumb {
+    background: #ccccf5;
+    border-radius: 3px;
+}
+
+.chat-body::-webkit-scrollbar-thumb:hover {
+    background: #b3b3f0;
 }
 
 .message {

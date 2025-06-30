@@ -12,164 +12,91 @@ const {
 const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN);
 const db = client.db(ASTRA_DB_API_ENDPOINT, { keyspace: ASTRA_DB_NAMESPACE as string });
 
+// Cache بسيط للاستعلامات المتكررة
+const queryCache = new Map();
+
+// دالة لإضافة تأخير
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function POST(req: Request) {
     try {
         const { messages } = await req.json();
         const lastMessage = messages[messages?.length - 1]?.content;
         let docContext = "";
-        let relevantSources: string[] = [];
 
-        // Check if message exists
-        if (!lastMessage || lastMessage.trim() === "") {
-            return new Response(
-                JSON.stringify({ error: "No message provided" }), 
-                { status: 400, headers: { 'Content-Type': 'application/json' } }
-            );
-        }
+        // إضافة تأخير اصطناعي (2 ثانية)
+        await delay(2000);
 
-        console.log("User question:", lastMessage);
-
-        // Create embedding using Gemini
-        const { embedding } = await embed({
-            model: google.textEmbeddingModel('text-embedding-004'),
-            value: lastMessage,
-        });
-
-        try {
-            const collection = await db.collection(ASTRA_DB_COLLECTION);
-            const cursor = collection.find(null, {
-                sort: {
-                    $vector: embedding,
-                },
-                limit: 5, // Reduce number for better performance
-                includeSimilarity: true // Add similarity score
+        // التحقق من Cache أولاً
+        const cacheKey = lastMessage.toLowerCase().trim();
+        if (queryCache.has(cacheKey)) {
+            docContext = queryCache.get(cacheKey);
+        } else {
+            // إنشاء embedding باستخدام Gemini
+            const { embedding } = await embed({
+                model: google.textEmbeddingModel('text-embedding-004'),
+                value: lastMessage,
             });
 
-            const documents = await cursor.toArray();
-            console.log(`Found ${documents.length} relevant documents`);
+            try {
+                const collection = await db.collection(ASTRA_DB_COLLECTION);
+                const cursor = collection.find(null, {
+                    sort: {
+                        $vector: embedding,
+                    },
+                    limit: 3 // تقليل أكثر لتحسين السرعة
+                });
 
-            if (documents && documents.length > 0) {
-                // Filter results by similarity score
-                const relevantDocs = documents.filter(doc => 
-                    doc.$similarity && doc.$similarity > 0.7 // Similarity threshold
-                );
+                const documents = await cursor.toArray();
+                const docsMap = documents?.map(doc => doc.text);
+                docContext = docsMap?.join(' ') || "";
 
-                if (relevantDocs.length > 0) {
-                    docContext = relevantDocs
-                        .map(doc => doc.text)
-                        .join('\n\n---\n\n');
-                    
-                    // Collect sources
-                    relevantSources = [...new Set(
-                        relevantDocs
-                            .map(doc => doc.source)
-                            .filter(source => source)
-                    )];
-                    
-                    console.log("Relevant sources:", relevantSources);
-                } else {
-                    console.log("No documents meet similarity threshold");
+                // حفظ في Cache
+                queryCache.set(cacheKey, docContext);
+                
+                // تنظيف Cache كل 100 استعلام
+                if (queryCache.size > 100) {
+                    const firstKey = queryCache.keys().next().value;
+                    queryCache.delete(firstKey);
                 }
-            }
 
-        } catch (err) {
-            console.error("Error querying database:", err);
-            docContext = "";
+            } catch (err) {
+                console.log("Error querying db...");
+                docContext = "";
+            }
         }
 
         const template = {
             role: "system",
-            content: `
-You are an expert cybersecurity assistant (Cybersecurity Expert Assistant). 
-Your task is to provide clear, accurate, and detailed answers about cybersecurity questions using the available context below.
+            content: `أنت WamedBot، مساعد ذكي تابع لشركة وميض للخدمات التسويقية.
 
-Important rules:
-1. Use information from the provided context as top priority
-2. If the context doesn't contain enough information, use your general cybersecurity knowledge
-3. Provide practical and actionable answers
-4. Mention specific tools and techniques when possible
-5. Highlight risks and security precautions
-6. If the question is about malicious tools or attacks, focus on defensive and preventive aspects
-7. Use Arabic in responses while mentioning technical terms in English
+مهمتك: تقديم إجابات دقيقة وواضحة للعملاء حول خدمات ومجالات عمل الشركة، بالاعتماد أولًا على البيانات المتوفرة لديك:
 
-Areas you can assist with:
-- Types of cyber attacks and protection methods
-- Cybersecurity tools and ethical testing
-- Security best practices
-- Risk management and security vulnerabilities
-- Secure networks and encryption
-- Incident response
+${docContext ? `معلومات الشركة والخدمات:\n${docContext}\n` : ''}
 
-${docContext ? `
---------------
-Context from specialized documents:
-${docContext}
---------------
-` : ''}
+قواعد مهمة:
+- استخدم المعلومات المقدمة أولًا، وإذا لم تكن كافية، استخدم معرفتك العامة لتقديم إجابة مفيدة قدر الإمكان.
+- أجب باللغة العربية الفصحى أو الإنجليزية حسب لغة العميل، مع محاولة فهم وتصحيح الأخطاء الإملائية إن وجدت.
+- كن ودودًا، محترمًا، وركّز دائمًا على إفادة العميل.
+- إذا لم تجد إجابة مناسبة في المعلومات المتوفرة أو معرفتك، اعتذر بلطف واقترح على العميل التواصل مع خدمة العملاء على الرقم +966565392584، واذكر له أن خدمة العملاء متاحة 24 ساعة في خدمته.
 
-${relevantSources.length > 0 ? `
-Relevant sources: ${relevantSources.join(', ')}
-` : ''}
-
-Question: ${lastMessage}
-
-Please provide a comprehensive and useful answer. If you're unsure about information, say "I apologize, I don't have enough information to answer this question accurately."
-        `
+سؤال العميل:
+${lastMessage}
+`
         };
 
-        // Add system messages for context
-        const systemMessages = [template];
-        
-        // Filter user messages (remove empty or inappropriate messages)
-        const filteredMessages = messages.filter((msg: any) => 
-            msg.content && 
-            msg.content.trim() !== "" && 
-            msg.content.length < 2000 // Maximum message length
-        );
-
-        // Use Gemini for text generation
+        // استخدام Gemini للـ text generation مع تحسينات
         const response = streamText({
             model: google('gemini-1.5-flash'),
-            messages: [...systemMessages, ...filteredMessages],
-            temperature: 0.7, // Balance between creativity and accuracy
-            maxTokens: 2000, // Maximum response length
-            topP: 0.9,
+            messages: [template, ...messages],
+            maxTokens: 300, // تقليل أكثر للسرعة
+            temperature: 0.5, // تقليل الإبداع أكثر
         });
 
         return response.toDataStreamResponse();
 
     } catch (err) {
         console.error('Error in POST handler:', err);
-        
-        // Return detailed error response
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-        
-        return new Response(
-            JSON.stringify({ 
-                error: "An error occurred while processing your request. Please try again.", 
-                details: errorMessage 
-            }), 
-            { 
-                status: 500, 
-                headers: { 'Content-Type': 'application/json' } 
-            }
-        );
+        return new Response('Internal Server Error', { status: 500 });
     }
-}
-
-// Add GET support for endpoint testing
-export async function GET() {
-    return new Response(
-        JSON.stringify({ 
-            message: "Cybersecurity Chatbot API is running", 
-            status: "active",
-            endpoints: {
-                POST: "Send messages to chat with the cybersecurity expert"
-            }
-        }), 
-        { 
-            status: 200, 
-            headers: { 'Content-Type': 'application/json' } 
-        }
-    );
 }

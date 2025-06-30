@@ -1,4 +1,5 @@
 import "./global.css";
+import Script from 'next/script';
 
 export const metadata = {
   title: "football gpt",
@@ -8,6 +9,12 @@ export const metadata = {
 const RootLayout = ({ children }) => {
   return (
     <html lang="en">
+      <head>
+        <Script 
+          src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"
+          strategy="beforeInteractive"
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

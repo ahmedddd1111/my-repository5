@@ -1,37 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WamedBot - Chatbot لشركة وميض للخدمات التسويقية
 
-## Getting Started
+هذا مشروع chatbot متخصص لشركة وميض للخدمات التسويقية (Wamed Marketing Services) - wamedadv.com. يوفر المساعد الذكي إجابات دقيقة ومفيدة حول خدمات الشركة المختلفة.
 
-First, run the development server:
+## معلومات الشركة
 
+- **الاسم:** شركة وميض للخدمات التسويقية (Wamed Marketing Services)
+- **الترخيص:** رخصة إعلامية رقم 149461 من المملكة العربية السعودية
+- **التأسيس:** 2021
+- **الشعار:** "إشعال الإبداع وتضخيم العلامات التجارية"
+- **الهاتف:** +966565392584
+- **البريد الإلكتروني:** info@wamedadv.com
+- **العنوان:** شارع الجرير، حي الملز، الرياض، المملكة العربية السعودية
+
+## المميزات
+
+- **مساعد ذكي متخصص**: WamedBot مصمم خصيصاً للإجابة على أسئلة العملاء حول خدمات وميض
+- **خدمات متعددة**: يغطي جميع خدمات الشركة مثل:
+  - التسويق الرقمي وإدارة السوشيال ميديا
+  - تصميم الجرافيك وتطوير الهوية البصرية
+  - تصميم وتطوير المواقع والمتاجر الإلكترونية
+  - الإعلانات الممولة (Google Ads, Facebook Ads)
+  - تحسين محركات البحث (SEO)
+  - إنتاج الفيديو والرسوم المتحركة (2D/3D)
+  - التصوير الفوتوغرافي وإنشاء المحتوى
+  - إدارة الأحداث والمعارض
+  - حلول خدمة العملاء (WhatsApp Business, مراكز الاتصال)
+  - الاستشارات الإدارية وتطوير الأعمال
+  - خدمات الترخيص (هيئة الغذاء والدواء، شهادات الأيزو)
+  - التسويق عبر البريد الإلكتروني
+- **واجهة عربية**: واجهة مستخدم باللغة العربية مع دعم الرموز التعبيرية
+- **اقتراحات ذكية**: أسئلة مقترحة للعملاء للوصول السريع للمعلومات
+
+## التقنيات المستخدمة
+
+- **Next.js 15**: إطار عمل React الحديث
+- **AI SDK**: للتعامل مع نماذج الذكاء الاصطناعي
+- **Google Gemini**: نموذج الذكاء الاصطناعي المستخدم
+- **Astra DB**: قاعدة بيانات للبحث الدلالي
+- **TypeScript**: للبرمجة الآمنة
+- **Tailwind CSS**: للتصميم
+
+## البدء
+
+1. قم بتثبيت التبعيات:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. قم بإعداد متغيرات البيئة في ملف `.env.local`:
+```env
+ASTRA_DB_NAMESPACE=your_namespace
+ASTRA_DB_COLLECTION=your_collection
+ASTRA_DB_API_ENDPOINT=your_endpoint
+ASTRA_DB_APPLICATION_TOKEN=your_token
+GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_key
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. قم بتشغيل الخادم المحلي:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. افتح [http://localhost:3000](http://localhost:3000) في المتصفح
 
-## Learn More
+## تحميل البيانات
 
-To learn more about Next.js, take a look at the following resources:
+لتحديث قاعدة البيانات بالمحتوى الجديد:
+```bash
+npm run seed
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## البناء والنشر
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run build
+npm start
+```
 
-## Deploy on Vercel
+## هيكل المشروع
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+wamed-chatbot/
+├── app/
+│   ├── api/chat/route.ts    # API endpoint للـ chatbot
+│   ├── page.tsx             # واجهة المستخدم الرئيسية
+│   └── layout.tsx           # تخطيط التطبيق
+├── data/
+│   └── wamedadv_full_content.txt # محتوى الشركة المحدث
+└── scripts/
+    └── loadDb.ts            # سكريبت تحميل البيانات
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# my-repository2
+## التواصل
+
+للمزيد من المعلومات حول خدمات وميض:
+- الموقع: [wamedadv.com](https://wamedadv.com)
+- البريد الإلكتروني: info@wamedadv.com
+- الهاتف: +966565392584
