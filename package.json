@@ -1,5 +1,5 @@
 {
-  "name": "rag-chatbot",
+  "name": "wamed-chatbot",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -24,8 +24,6 @@
     "langchain": "^0.3.28",
     "next": "15.3.3",
     "openai": "^4.104.0",
-    "pdf-parse": "^1.1.1",
-    "puppeteer": "^24.10.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "ts-node": "^10.9.2"
