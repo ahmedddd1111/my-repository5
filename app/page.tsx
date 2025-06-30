@@ -2,7 +2,14 @@
 import Image from "next/image";
 import { useChat } from "ai/react";
 import { Message } from "ai";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import dynamic from 'next/dynamic';
+
+// استيراد EmojiPicker بشكل ديناميكي
+const EmojiPicker = dynamic(() => import('emoji-picker-react').then(mod => mod.default), {
+  ssr: false,
+  loading: () => <div className="emoji-picker-loading">جاري التحميل...</div>
+});
 
 const Bubble = ({ message }) => {
   const { content, role } = message;
@@ -10,7 +17,7 @@ const Bubble = ({ message }) => {
     <div className={`message ${role === "user" ? "user-message" : "bot-message"}`}>
       {role === "assistant" && (
         <div className="bot-avatar">
-          <img src="/ChatGPT.png" className="chatbot-logo" alt="Bot" />
+          <img src="/wamed_logo.jpg" className="chatbot-logo" alt="Bot" />
         </div>
       )}
       <div className="message-text">{content}</div>
@@ -22,55 +29,13 @@ const LoadingBubble = () => {
   return (
     <div className="message bot-message thinking">
       <div className="bot-avatar">
-        <img src="/ChatGPT.png" className="chatbot-logo" alt="Bot" />
+        <img src="/wamed_logo.jpg" className="chatbot-logo" alt="Bot" />
       </div>
       <div className="message-text">
         <div className="thinking-indicator">
           <div className="dot"></div>
           <div className="dot"></div>
           <div className="dot"></div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const EmojiPicker = ({ onEmojiSelect, isOpen, onClose }) => {
-  const emojis = [
-    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
-    '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
-    '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
-    '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
-    '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
-    '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗',
-    '⚽', '🏈', '🏀', '🏐', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏',
-    '🎯', '🎳', '🥇', '🥈', '🥉', '🏆', '🏅', '🎖️', '⭐', '✨',
-    '💯', '🔥', '💪', '👏', '🙌', '👍', '👎', '✊', '👊', '🤝',
-    '❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '🤍', '🤎', '💗'
-  ];
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="emoji-picker-overlay" onClick={onClose}>
-      <div className="emoji-picker" onClick={(e) => e.stopPropagation()}>
-        <div className="emoji-picker-header">
-          <span>اختر رمز تعبيري</span>
-          <button className="emoji-picker-close" onClick={onClose}>×</button>
-        </div>
-        <div className="emoji-grid">
-          {emojis.map((emoji, index) => (
-            <button
-              key={index}
-              className="emoji-button"
-              onClick={() => {
-                onEmojiSelect(emoji);
-                onClose();
-              }}
-            >
-              {emoji}
-            </button>
-          ))}
         </div>
       </div>
     </div>
@@ -87,10 +52,10 @@ const PromptSuggestionButton = ({ text, onClick }) => {
 
 const PromptSuggestionsRow = ({ onPromptClick }) => {
   const prompts = [
-    "Tell me about the rivalry between Al Ahly SC and Zamalek SC.",
-    "How many UEFA Champions League titles has Real Madrid won, and in which years?",
-    "Which teams have won both the FIFA World Cup and the UEFA European Championship?",
-    "What's the difference between the CAF Champions League and the FIFA Club World Cup?",
+    "ما هي خدمات التسويق الرقمي التي تقدمونها؟",
+    "أين يقع مقر شركة وميض؟",
+    "هل تقدمون خدمات استشارية؟",
+    "كيف يمكنني الحصول على شهادة الأيزو بمساعدتكم؟",
   ];
   return (
     <div className="prompt-suggestion-row">
@@ -108,19 +73,18 @@ const PromptSuggestionsRow = ({ onPromptClick }) => {
 const Home = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef(null);
-
-  const handlePrompt = (promptText) => {
-    const msg: Message = {
-      id: crypto.randomUUID(),
-      content: promptText,
-      role: "user",
-    };
-    append(msg);
-  };
+  const chatBodyRef = useRef(null);
 
   const { append, isLoading, messages, input, handleInputChange, handleSubmit, setInput } =
     useChat();
   const noMessages = !messages || messages.length === 0;
+
+  // Auto-scroll إلى أسفل عند وصول رسائل جديدة
+  useEffect(() => {
+    if (chatBodyRef.current) {
+      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+    }
+  }, [messages, isLoading]);
 
   // إرسال الرسالة عند الضغط Enter (مع دعم Shift+Enter لسطر جديد)
   const handleKeyDown = (e) => {
@@ -130,35 +94,41 @@ const Home = () => {
     }
   };
 
-  const handleEmojiSelect = (emoji) => {
+  const handleEmojiSelect = (emojiData) => {
     const textarea = textareaRef.current;
     if (textarea) {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
-      const newText = input.slice(0, start) + emoji + input.slice(end);
+      const newText = input.slice(0, start) + emojiData.emoji + input.slice(end);
       setInput(newText);
-      
-      // إعادة تركيز المؤشر بعد إضافة الإيموجي
       setTimeout(() => {
         textarea.focus();
-        textarea.setSelectionRange(start + emoji.length, start + emoji.length);
+        textarea.setSelectionRange(start + emojiData.emoji.length, start + emojiData.emoji.length);
       }, 0);
     }
+    setShowEmojiPicker(false);
+  };
+
+  const handlePrompt = (promptText) => {
+    append({
+      content: promptText,
+      role: "user"
+    });
   };
 
   return (
     <div className="Chatbot-popup">
       <div className="chat-header">
         <div className="header-info">
-          <img src="/ChatGPT.png" className="chatbot-logo" alt="Bot" />
-          <span className="logo-text">Chatbot</span>
+          <img src="/wamed_logo.jpg" className="chatbot-logo" alt="Bot" />
+          <span className="logo-text">مساعد وميض الذكي</span>
         </div>
       </div>
-      <div className="chat-body">
+      <div className="chat-body" ref={chatBodyRef}>
         {noMessages ? (
           <>
             <Bubble message={{
-              content: "The ultimate place for football super fans! Ask FootyGPT anything about the fantastic world of football and it will come back with the most up-to-date answers.",
+              content: "مرحباً! أنا مساعد وميض الذكي. كيف يمكنني مساعدتك اليوم؟ يمكنك سؤالي عن خدماتنا في التسويق الرقمي، التصميم، إدارة حسابات التواصل الاجتماعي، أو أي شيء آخر يتعلق بنشاط شركة وميض.",
               role: "assistant"
             }} />
             <PromptSuggestionsRow onPromptClick={handlePrompt} />
@@ -168,7 +138,7 @@ const Home = () => {
             {messages.map((message, index) => (
               <Bubble key={`message-${index}`} message={message} />
             ))}
-            {isLoading && <LoadingBubble />}
+            {isLoading && (messages.length === 0 || messages[messages.length - 1].role === "user") && <LoadingBubble />}
           </>
         )}
       </div>
@@ -179,7 +149,7 @@ const Home = () => {
             className="message-input"
             onChange={handleInputChange}
             value={input}
-            placeholder="Ask me something..."
+            placeholder="اسأل عن خدمات وميض..."
             rows={1}
             style={{ resize: "none", height: 54 }}
             required
@@ -203,20 +173,31 @@ const Home = () => {
               id="send-message"
               type="submit"
               disabled={input.trim() === ""}
+              style={{ paddingLeft: '4px' }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                 <path d="M3 21L21 12L3 3V10L17 12L3 14V21Z" fill="currentColor"/>
               </svg>
             </button>
           </div>
         </form>
       </div>
-      
-      <EmojiPicker 
-        isOpen={showEmojiPicker}
-        onEmojiSelect={handleEmojiSelect}
-        onClose={() => setShowEmojiPicker(false)}
-      />
+      {showEmojiPicker && (
+        <div className="emoji-picker-overlay" onClick={() => setShowEmojiPicker(false)}>
+          <div className="emoji-picker" onClick={e => e.stopPropagation()}>
+            <EmojiPicker
+              onEmojiClick={handleEmojiSelect}
+              width={350}
+              height={400}
+              searchPlaceholder="البحث عن رمز تعبيري..."
+              skinTonesDisabled
+              previewConfig={{
+                showPreview: false
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

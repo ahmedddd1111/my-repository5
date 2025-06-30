@@ -37,32 +37,33 @@ export async function POST(req: Request) {
 
         try {
             const collection = await db.collection(ASTRA_DB_COLLECTION);
+            
+            // تحسين البحث - البحث في جميع أنواع المحتوى
             const cursor = collection.find(null, {
                 sort: {
                     $vector: embedding,
                 },
-                limit: 5, // Reduce number for better performance
-                includeSimilarity: true // Add similarity score
+                limit: 5, 
+                includeSimilarity: true
             });
 
             const documents = await cursor.toArray();
             console.log(`Found ${documents.length} relevant documents`);
 
             if (documents && documents.length > 0) {
-                // Filter results by similarity score
-                const relevantDocs = documents.filter(doc => 
-                    doc.$similarity && doc.$similarity > 0.7 // Similarity threshold
-                );
+                // تحسين عتبة التشابه بناءً على نوع المحتوى
+                const relevantDocs = documents.filter(doc => (doc.$similarity || 0) > 0.7);
 
                 if (relevantDocs.length > 0) {
+                    
                     docContext = relevantDocs
                         .map(doc => doc.text)
-                        .join('\n\n---\n\n');
+                        .join('\\n\\n---\\n\\n');
                     
                     // Collect sources
                     relevantSources = [...new Set(
                         relevantDocs
-                            .map(doc => doc.source)
+                            .map(doc => doc.filename) // use filename as source
                             .filter(source => source)
                     )];
                     
@@ -80,40 +81,21 @@ export async function POST(req: Request) {
         const template = {
             role: "system",
             content: `
-You are an expert cybersecurity assistant (Cybersecurity Expert Assistant). 
-Your task is to provide clear, accurate, and detailed answers about cybersecurity questions using the available context below.
+أنت مساعد وميض الذكي، خبير في خدمات شركة وميض للدعاية والإعلان والتسويق الرقمي.
 
-Important rules:
-1. Use information from the provided context as top priority
-2. If the context doesn't contain enough information, use your general cybersecurity knowledge
-3. Provide practical and actionable answers
-4. Mention specific tools and techniques when possible
-5. Highlight risks and security precautions
-6. If the question is about malicious tools or attacks, focus on defensive and preventive aspects
-7. Use Arabic in responses while mentioning technical terms in English
+مهمتك: تقديم إجابات دقيقة ومفيدة عن خدمات شركة وميض، بالاعتماد على السياق التالي:
 
-Areas you can assist with:
-- Types of cyber attacks and protection methods
-- Cybersecurity tools and ethical testing
-- Security best practices
-- Risk management and security vulnerabilities
-- Secure networks and encryption
-- Incident response
+${docContext ? `معلومات عن شركة وميض وخدماتها:\n${docContext}\n` : ''}
 
-${docContext ? `
---------------
-Context from specialized documents:
-${docContext}
---------------
-` : ''}
+قواعد مهمة:
+- استخدم المعلومات المقدمة من السياق فقط للإجابة على السؤال.
+- كن واضحًا ومباشرًا ومفيدًا.
+- اكتب باللغة العربية الفصحى.
+- إذا كان السؤال مكتوبًا بلهجة عامية، افهم القصد وأجب بلغة فصحى.
+- إذا لم تجد إجابة في المعلومات المتوفرة، قل: "لا تتوفر لدي معلومات كافية حول هذا الموضوع. يمكنك التواصل مباشرة مع فريق وميض لمزيد من التفاصيل عبر الهاتف: 966565392584+ أو البريد الإلكتروني: info@wamedadv.com".
 
-${relevantSources.length > 0 ? `
-Relevant sources: ${relevantSources.join(', ')}
-` : ''}
-
-Question: ${lastMessage}
-
-Please provide a comprehensive and useful answer. If you're unsure about information, say "I apologize, I don't have enough information to answer this question accurately."
+سؤال العميل:
+${lastMessage}
         `
         };
 
@@ -131,9 +113,9 @@ Please provide a comprehensive and useful answer. If you're unsure about informa
         const response = streamText({
             model: google('gemini-1.5-flash'),
             messages: [...systemMessages, ...filteredMessages],
-            temperature: 0.7, // Balance between creativity and accuracy
-            maxTokens: 2000, // Maximum response length
-            topP: 0.9,
+            temperature: 0.6, // تقليل الإبداع للحصول على إجابات أكثر دقة
+            maxTokens: 1500, // تقليل طول الرد للحصول على إجابات أكثر تركيزاً
+            topP: 0.8,
         });
 
         return response.toDataStreamResponse();
@@ -161,10 +143,10 @@ Please provide a comprehensive and useful answer. If you're unsure about informa
 export async function GET() {
     return new Response(
         JSON.stringify({ 
-            message: "Cybersecurity Chatbot API is running", 
+            message: "Wamed Chatbot API is running", 
             status: "active",
             endpoints: {
-                POST: "Send messages to chat with the cybersecurity expert"
+                POST: "Send messages to chat with the Wamed assistant"
             }
         }), 
         { 
