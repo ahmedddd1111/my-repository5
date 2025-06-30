@@ -118,14 +118,14 @@ const Home = () => {
       <div className="chat-header">
         <div className="header-info">
           <img src="/wamed_logo.jpg" className="chatbot-logo" alt="Bot" />
-          <span className="logo-text">مساعد وميض الذكي</span>
+          <span className="logo-text">Wamedbot</span>
         </div>
       </div>
       <div className="chat-body" ref={chatBodyRef}>
         {noMessages ? (
           <>
             <Bubble message={{
-              content: "مرحباً! أنا مساعد وميض الذكي. كيف يمكنني مساعدتك اليوم؟ يمكنك سؤالي عن خدماتنا في التسويق الرقمي، التصميم، إدارة حسابات التواصل الاجتماعي، أو أي شيء آخر يتعلق بنشاط شركة وميض.",
+              content: "مرحباً! أنا (wamedbot) 😊 كيف أقدر أساعدك اليوم؟ اسألني عن خدمات التسويق الرقمي، التصميم، أو إدارة السوشيال ميديا.",
               role: "assistant"
             }} />
             <PromptSuggestionsRow onPromptClick={handlePrompt} />
