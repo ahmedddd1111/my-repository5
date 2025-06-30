@@ -1,7 +1,5 @@
 "use client";
-import Image from "next/image";
 import { useChat } from "ai/react";
-import { Message } from "ai";
 import { useState, useRef, useEffect } from "react";
 import dynamic from 'next/dynamic';
 

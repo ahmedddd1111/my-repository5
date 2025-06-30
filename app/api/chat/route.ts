@@ -1,5 +1,5 @@
 import { google } from '@ai-sdk/google';
-import { streamText, embed } from 'ai';
+import { streamText, embed, CoreMessage } from 'ai';
 import { DataAPIClient } from "@datastax/astra-db-ts";
 
 const {
@@ -12,10 +12,37 @@ const {
 const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN);
 const db = client.db(ASTRA_DB_API_ENDPOINT, { keyspace: ASTRA_DB_NAMESPACE as string });
 
+// تعريف أنواع البيانات
+interface ChatMessage {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+}
+
+interface RequestBody {
+    messages?: ChatMessage[];
+}
+
+interface DatabaseDocument {
+    text?: string;
+    filename?: string;
+    $similarity?: number;
+    [key: string]: unknown; // للسماح بخصائص إضافية من قاعدة البيانات
+}
+
 export async function POST(req: Request) {
     try {
-        const { messages } = await req.json();
-        const lastMessage = messages[messages?.length - 1]?.content;
+        const body: RequestBody = await req.json();
+        const messages = body.messages || [];
+        
+        // التحقق من وجود الرسائل
+        if (!messages || messages.length === 0) {
+            return new Response(
+                JSON.stringify({ error: "No messages provided" }), 
+                { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+        
+        const lastMessage = messages[messages.length - 1]?.content;
         let docContext = "";
         let relevantSources: string[] = [];
 
@@ -52,19 +79,24 @@ export async function POST(req: Request) {
 
             if (documents && documents.length > 0) {
                 // تحسين عتبة التشابه بناءً على نوع المحتوى
-                const relevantDocs = documents.filter(doc => (doc.$similarity || 0) > 0.7);
+                const relevantDocs = documents.filter((doc: DatabaseDocument) => 
+                    (doc.$similarity || 0) > 0.7
+                );
 
                 if (relevantDocs.length > 0) {
                     
                     docContext = relevantDocs
-                        .map(doc => doc.text)
+                        .map((doc: DatabaseDocument) => doc.text || '')
+                        .filter(text => text.trim() !== '')
                         .join('\\n\\n---\\n\\n');
                     
                     // Collect sources
                     relevantSources = [...new Set(
                         relevantDocs
-                            .map(doc => doc.filename) // use filename as source
-                            .filter(source => source)
+                            .map((doc: DatabaseDocument) => doc.filename)
+                            .filter((source): source is string => 
+                                source !== undefined && source !== null && source.trim() !== ''
+                            )
                     )];
                     
                     console.log("Relevant sources:", relevantSources);
@@ -78,7 +110,7 @@ export async function POST(req: Request) {
             docContext = "";
         }
 
-        const template = {
+        const template: CoreMessage = {
             role: "system",
             content: `
 أنت مساعد وميض الذكي، خبير في خدمات شركة وميض للدعاية والإعلان والتسويق الرقمي.
@@ -99,20 +131,26 @@ ${lastMessage}
         `
         };
 
-        // Add system messages for context
-        const systemMessages = [template];
-        
         // Filter user messages (remove empty or inappropriate messages)
-        const filteredMessages = messages.filter((msg: any) => 
+        const filteredMessages = messages.filter((msg: ChatMessage) => 
             msg.content && 
             msg.content.trim() !== "" && 
             msg.content.length < 2000 // Maximum message length
         );
 
+        // Convert to CoreMessage format
+        const coreMessages: CoreMessage[] = filteredMessages.map((msg): CoreMessage => ({
+            role: msg.role as 'user' | 'assistant' | 'system',
+            content: msg.content
+        }));
+
+        // Combine all messages with proper typing
+        const allMessages: CoreMessage[] = [template, ...coreMessages];
+
         // Use Gemini for text generation
         const response = streamText({
             model: google('gemini-1.5-flash'),
-            messages: [...systemMessages, ...filteredMessages],
+            messages: allMessages,
             temperature: 0.6, // تقليل الإبداع للحصول على إجابات أكثر دقة
             maxTokens: 1500, // تقليل طول الرد للحصول على إجابات أكثر تركيزاً
             topP: 0.8,
