@@ -7,6 +7,7 @@ import * as path from 'path';
 import "dotenv/config";
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import pdfParse from 'pdf-parse';
 
 type SimilarityMetric = "dot_product" | "cosine" | "euclidean";
 
@@ -36,26 +37,16 @@ const createCollection = async (similarityMetric: SimilarityMetric = "dot_produc
 };
 
 const WEB_LINKS = [
-  "https://wamedadv.com/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/",
-  "https://wamedadv.com/ar/%d8%b9%d9%86-%d9%88%d9%85%d9%8a%d8%b6/",
-  "https://wamedadv.com/ar/%d8%a7%d9%84%d8%aa%d8%b3%d9%88%d9%8a%d9%82/",
-  "https://wamedadv.com/ar/%d8%a7%d9%84%d8%a3%d8%b9%d9%85%d8%a7%d9%84/",
-  "https://wamedadv.com/ar/%d8%a5%d9%86%d8%aa%d8%a7%d8%ac-%d8%a5%d8%b9%d9%84%d8%a7%d9%85%d9%8a/",
-  "https://wamedadv.com/ar/%d8%aa%d9%86%d8%b8%d9%8a%d9%85-%d8%a7%d9%84%d9%85%d8%a4%d8%aa%d9%85%d8%b1%d8%a7%d8%aa/",
-  "https://wamedadv.com/ar/%d8%a7%d9%84%d8%b5%d9%88%d8%b1/",
-  "https://wamedadv.com/ar/%d8%a7%d9%84%d9%81%d9%8a%d8%af%d9%8a%d9%88%d9%87%d8%a7%d8%aa/",
-  "https://wamedadv.com/ar/%d8%a7%d9%84%d9%85%d8%af%d9%88%d9%86%d8%a9/",
-  "https://wamedadv.com/ar/%d8%aa%d8%b1%d8%a7%d8%ae%d9%8a%d8%b5%d9%86%d8%a7/",
-  "https://wamedadv.com/ar/%d8%aa%d9%88%d8%a7%d8%b5%d9%84-%d9%85%d8%b9%d9%86%d8%a7/",
-  "https://wamedadv.com/",
-  "https://wamedadv.com/about-us/",
-  "https://wamedadv.com/marketing/",
-  "https://wamedadv.com/business/",
-  "https://wamedadv.com/media-production/",
-  "https://wamedadv.com/event-planning/",
-  "https://wamedadv.com/blog/",
-  "https://wamedadv.com/licenses/",
-  "https://wamedadv.com/contact-us/"
+  "https://woow.sa/ar",
+  "https://woow.sa/en",
+  "https://woow.sa/ar/about",
+  "https://woow.sa/en/about",
+  "https://woow.sa/ar/%D8%AE%D8%AF%D9%85%D8%A7%D8%AA%D9%86%D8%A7",
+  "https://woow.sa/en/%D8%AE%D8%AF%D9%85%D8%A7%D8%AA%D9%86%D8%A7",
+  "https://woow.sa/ar/partners",
+  "https://woow.sa/en/partners",
+  "https://woow.sa/ar/reports",
+  "https://woow.sa/en/reports"
 ];
 
 async function fetchWebPageText(url: string): Promise<string> {
@@ -118,15 +109,16 @@ const readDataFiles = async () => {
     const dataFolder = path.join(process.cwd(), 'data');
     
     if (!fs.existsSync(dataFolder)) {
-        console.error('مجلد data غير موجود! يرجى إنشاؤه وإضافة ملفات txt');
+        console.error('مجلد data غير موجود! يرجى إنشاؤه وإضافة ملفات txt أو pdf');
         return [];
     }
 
     const files = fs.readdirSync(dataFolder);
     const txtFiles = files.filter(file => file.endsWith('.txt'));
+    const pdfFiles = files.filter(file => file.endsWith('.pdf'));
     
-    if (txtFiles.length === 0) {
-        console.error('لا توجد ملفات txt في مجلد data');
+    if (txtFiles.length === 0 && pdfFiles.length === 0) {
+        console.error('لا توجد ملفات txt أو pdf في مجلد data');
         return [];
     }
 
@@ -143,6 +135,21 @@ const readDataFiles = async () => {
             console.log(`تم قراءة ملف: ${file}`);
         } catch (error) {
             console.error(`خطأ في قراءة ملف ${file}:`, error);
+        }
+    }
+
+    for (const file of pdfFiles) {
+        const filePath = path.join(dataFolder, file);
+        try {
+            const data = fs.readFileSync(filePath);
+            const pdfData = await pdfParse(data);
+            fileContents.push({
+                filename: file,
+                content: pdfData.text
+            });
+            console.log(`تم استخراج نص من ملف PDF: ${file}`);
+        } catch (error) {
+            console.error(`خطأ في قراءة أو معالجة ملف PDF ${file}:`, error);
         }
     }
 

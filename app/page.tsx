@@ -15,7 +15,7 @@ const Bubble = ({ message }) => {
     <div className={`message ${role === "user" ? "user-message" : "bot-message"}`}>
       {role === "assistant" && (
         <div className="bot-avatar">
-          <img src="/wamed_logo.jpg" className="chatbot-logo" alt="Bot" />
+          <img src="/woow_logo.jpg" className="chatbot-logo" alt="Bot" />
         </div>
       )}
       <div className="message-text">{content}</div>
@@ -27,7 +27,7 @@ const LoadingBubble = () => {
   return (
     <div className="message bot-message thinking">
       <div className="bot-avatar">
-        <img src="/wamed_logo.jpg" className="chatbot-logo" alt="Bot" />
+        <img src="/woow_logo.jpg" className="chatbot-logo" alt="Bot" />
       </div>
       <div className="message-text">
         <div className="thinking-indicator">
@@ -50,9 +50,9 @@ const PromptSuggestionButton = ({ text, onClick }) => {
 
 const PromptSuggestionsRow = ({ onPromptClick }) => {
   const prompts = [
-    "ما هي خدمات التسويق الرقمي التي تقدمونها؟",
-    "هل تقدمون خدمات استشارية؟",
-    "هل تنفذون حفلات تخرج لطلاب الجامعات",
+    "ما هي استراتيجية بناء العلامة التجارية",
+    "كيف يمكنني التواصل معكم",
+    "ما هي الخدمات الأساسية التي تقدمونها",
   ];
   return (
     <div className="prompt-suggestion-row">
@@ -117,15 +117,15 @@ const Home = () => {
     <div className="Chatbot-popup">
       <div className="chat-header">
         <div className="header-info">
-          <img src="/wamed_logo.jpg" className="chatbot-logo" alt="Bot" />
-          <span className="logo-text">Wamedbot</span>
+          <img src="/woow_logo.jpg" className="chatbot-logo" alt="Bot" />
+          <span className="logo-text">Woowbot</span>
         </div>
       </div>
       <div className="chat-body" ref={chatBodyRef}>
         {noMessages ? (
           <>
             <Bubble message={{
-              content: "مرحباً! أنا (wamedbot) 😊 كيف أقدر أساعدك اليوم؟ اسألني عن خدمات التسويق الرقمي، التصميم، أو إدارة السوشيال ميديا.",
+              content: "مرحباً! أنا (WoowBot) 😊 كيف أقدر أساعدك اليوم؟ اسألني عن خدمات التسويق والحلول الإبداعية، إدارة الفعاليات، أو تصميم الحملات التسويقية.",
               role: "assistant"
             }} />
             <PromptSuggestionsRow onPromptClick={handlePrompt} />
