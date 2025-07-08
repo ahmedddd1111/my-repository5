@@ -22,11 +22,11 @@ const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN);
 const db = client.db(ASTRA_DB_API_ENDPOINT, { keyspace: ASTRA_DB_NAMESPACE as string });
 
 const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 512,
-    chunkOverlap: 100
+  chunkSize: 256,
+  chunkOverlap: 50
 });
 
-const createCollection = async (similarityMetric: SimilarityMetric = "dot_product") => {
+const createCollection = async (similarityMetric: SimilarityMetric = "cosine") => {
     const res = await db.createCollection(ASTRA_DB_COLLECTION, {
         vector: {
             dimension: 768, // Gemini embedding dimension is 768
@@ -37,16 +37,13 @@ const createCollection = async (similarityMetric: SimilarityMetric = "dot_produc
 };
 
 const WEB_LINKS = [
-  "https://woow.sa/ar",
-  "https://woow.sa/en",
-  "https://woow.sa/ar/about",
-  "https://woow.sa/en/about",
-  "https://woow.sa/ar/%D8%AE%D8%AF%D9%85%D8%A7%D8%AA%D9%86%D8%A7",
-  "https://woow.sa/en/%D8%AE%D8%AF%D9%85%D8%A7%D8%AA%D9%86%D8%A7",
-  "https://woow.sa/ar/partners",
-  "https://woow.sa/en/partners",
-  "https://woow.sa/ar/reports",
-  "https://woow.sa/en/reports"
+    "https://hubmarketingagency.com/",
+    "https://hubmarketingagency.com/about-company/",
+    "https://hubmarketingagency.com/our-services/",
+    "https://hubmarketingagency.com/partners/",
+    "https://hubmarketingagency.com/portfolio-grid/",
+    "https://hubmarketingagency.com/our-team/",
+    "https://hubmarketingagency.com/contact/"
 ];
 
 async function fetchWebPageText(url: string): Promise<string> {

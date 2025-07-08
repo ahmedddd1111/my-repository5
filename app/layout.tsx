@@ -2,7 +2,7 @@ import "./global.css";
 import Script from 'next/script';
 
 export const metadata = {
-  title: "woow gpt",
+  title: "hub gpt",
   description: "the place to go for all your marketing questions!",
 };
 

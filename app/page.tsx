@@ -15,7 +15,7 @@ const Bubble = ({ message }) => {
     <div className={`message ${role === "user" ? "user-message" : "bot-message"}`}>
       {role === "assistant" && (
         <div className="bot-avatar">
-          <img src="/woow_logo.jpg" className="chatbot-logo" alt="Bot" />
+          <img src="/hub.png" className="chatbot-logo" alt="Bot" />
         </div>
       )}
       <div className="message-text">{content}</div>
@@ -27,7 +27,7 @@ const LoadingBubble = () => {
   return (
     <div className="message bot-message thinking">
       <div className="bot-avatar">
-        <img src="/woow_logo.jpg" className="chatbot-logo" alt="Bot" />
+        <img src="/hub.png" className="chatbot-logo" alt="Bot" />
       </div>
       <div className="message-text">
         <div className="thinking-indicator">
@@ -50,9 +50,10 @@ const PromptSuggestionButton = ({ text, onClick }) => {
 
 const PromptSuggestionsRow = ({ onPromptClick }) => {
   const prompts = [
-    "ما هي استراتيجية بناء العلامة التجارية",
+    "لماذا تختار HUB؟",
     "كيف يمكنني التواصل معكم",
-    "ما هي الخدمات الأساسية التي تقدمونها",
+    "ازاي هتفدوني في نمو البيزنس بتاعي؟",
+    "هل يمكنكم مساعدتي في تصميم حملة تسويقية؟",
   ];
   return (
     <div className="prompt-suggestion-row">
@@ -81,6 +82,8 @@ const Home = () => {
     if (chatBodyRef.current) {
       chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
     }
+    // لوج لتشخيص الرسائل
+    console.log("[DEBUG] messages:", messages);
   }, [messages, isLoading]);
 
   // إرسال الرسالة عند الضغط Enter (مع دعم Shift+Enter لسطر جديد)
@@ -117,15 +120,15 @@ const Home = () => {
     <div className="Chatbot-popup">
       <div className="chat-header">
         <div className="header-info">
-          <img src="/woow_logo.jpg" className="chatbot-logo" alt="Bot" />
-          <span className="logo-text">Woowbot</span>
+          <img src="/hub.png" className="chatbot-logo" alt="Bot" />
+          <span className="logo-text">Hubbot</span>
         </div>
       </div>
       <div className="chat-body" ref={chatBodyRef}>
         {noMessages ? (
           <>
             <Bubble message={{
-              content: "مرحباً! أنا (WoowBot) 😊 كيف أقدر أساعدك اليوم؟ اسألني عن خدمات التسويق والحلول الإبداعية، إدارة الفعاليات، أو تصميم الحملات التسويقية.",
+              content: "مرحباً! أنا (Hubbot) 😊 كيف أقدر أساعدك اليوم؟ اسألني عن خدمات التسويق والحلول الإبداعية، إدارة الفعاليات، أو تصميم الحملات التسويقية.",
               role: "assistant"
             }} />
             <PromptSuggestionsRow onPromptClick={handlePrompt} />
