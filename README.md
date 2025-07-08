@@ -98,4 +98,3 @@ wamed-chatbot/
 - البريد الإلكتروني: info@wamedadv.com
 - الهاتف: +966565392584
 # my-repository5
-# my-repository5
