@@ -119,7 +119,7 @@ const Home = () => {
     <div className="Chatbot-popup">
       <div className="chat-header">
         <div className="header-info">
-          <img src="/techlogo.ico" className="chatbot-logo" alt="Bot" />
+          <img src="/watch.png" className="chatbot-logo" alt="Bot" />
           <span className="logo-text">Watch</span>
         </div>
       </div>
