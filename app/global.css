@@ -29,7 +29,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #00c3ff;
+    background: #ffca1e;
     padding: 15px 22px 13px 22px;
     border-radius: 0 0 18px 18px;
 }
@@ -165,7 +165,7 @@ body {
 
 .user-message .message-text {
     color: #fff;
-    background: #0059ff;
+    background: #00a2ff;
     border-radius: 16px 16px 6px 16px;
     box-shadow: 0 1px 8px #bdbdfd22;
 }
