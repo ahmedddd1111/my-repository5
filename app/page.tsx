@@ -15,7 +15,7 @@ const Bubble = ({ message }) => {
     <div className={`message ${role === "user" ? "user-message" : "bot-message"}`}>
       {role === "assistant" && (
         <div className="bot-avatar">
-          <img src="/hub.png" className="chatbot-logo" alt="Bot" />
+          <img src="/watch.png" className="chatbot-logo" alt="Bot" />
         </div>
       )}
       <div className="message-text">{content}</div>
@@ -27,7 +27,7 @@ const LoadingBubble = () => {
   return (
     <div className="message bot-message thinking">
       <div className="bot-avatar">
-        <img src="/hub.png" className="chatbot-logo" alt="Bot" />
+        <img src="/watch.png" className="chatbot-logo" alt="Bot" />
       </div>
       <div className="message-text">
         <div className="thinking-indicator">
@@ -50,10 +50,9 @@ const PromptSuggestionButton = ({ text, onClick }) => {
 
 const PromptSuggestionsRow = ({ onPromptClick }) => {
   const prompts = [
-    "لماذا تختار HUB؟",
-    "كيف يمكنني التواصل معكم",
-    "ازاي هتفدوني في نمو البيزنس بتاعي؟",
-    "هل يمكنكم مساعدتي في تصميم حملة تسويقية؟",
+  "ما هي أنواع الساعات المتاحة لديكم؟",
+  "هل توفرون ساعات للرجال والنساء على حد سواء؟",
+  "هل يوجد ضمان على الساعات التي أشتريها من متجركم؟",
   ];
   return (
     <div className="prompt-suggestion-row">
@@ -120,15 +119,15 @@ const Home = () => {
     <div className="Chatbot-popup">
       <div className="chat-header">
         <div className="header-info">
-          <img src="/hub.png" className="chatbot-logo" alt="Bot" />
-          <span className="logo-text">Hubbot</span>
+          <img src="/techlogo.ico" className="chatbot-logo" alt="Bot" />
+          <span className="logo-text">Watch</span>
         </div>
       </div>
       <div className="chat-body" ref={chatBodyRef}>
         {noMessages ? (
           <>
             <Bubble message={{
-              content: "مرحباً! أنا (Hubbot) 😊 كيف أقدر أساعدك اليوم؟ اسألني عن خدمات التسويق والحلول الإبداعية، إدارة الفعاليات، أو تصميم الحملات التسويقية.",
+              content: "مرحباً بك! أنا مساعدك في متجر الساعات ⌚ كيف يمكنني مساعدتك اليوم؟ اسألني عن أفضل الماركات، أحدث الموديلات، أو أي تفاصيل عن الساعات التي تثير اهتمامك.",
               role: "assistant"
             }} />
             <PromptSuggestionsRow onPromptClick={handlePrompt} />
